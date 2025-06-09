@@ -21,6 +21,8 @@
 #include "ui/mods/sources/ModListSource.hpp"
 #include <loader/LoaderImpl.hpp>
 #include <Geode/ui/MDPopup.hpp>
+#include "cocos2d.h"
+
 
 bool ModsStatusNode::init() {
     if (!CCNode::init())
@@ -666,17 +668,36 @@ bool ModsLayer::init() {
             return 0;
         }();
     }
+    // Counts enabled mods
+    int enabledMods = 0;
+    for (geode::Mod* mod : geode::Loader::get()->getAllMods()){
+        if(mod->isEnabled()){
+            enabledMods++;
+        }
+    }
+
+    auto enabledLabel = CCLabelBMFont::create(
+        fmt::format("Enabled: {}", enabledMods).c_str(),
+        "goldfont.fnt"
+    );
+    enabledLabel->setAnchorPoint({0.953f, 1.0f});
+    enabledLabel->setScale(0.35f);
+
+    auto localPos = this->convertToNodeSpace(m_pageLabel->getParent()->convertToWorldSpace(m_pageLabel->getPosition()));
+    enabledLabel->setPosition(localPos + ccp(0, -5.5));
+    enabledLabel->setZOrder(10);
+    this->addChild(enabledLabel);
 
     return true;
 }
 
 void ModsLayer::gotoTab(ModListSource* src) {
     // Update selected tab
-    for (auto tab : m_tabs) {
+    for (auto tab : m_tabs) 
         auto selected = tab->getUserData() == static_cast<void*>(src);
         static_cast<GeodeTabSprite*>(tab->getNormalImage())->select(selected);
         tab->setEnabled(!selected);
-    }
+    
 
     // Remove current list from UI (it's Ref'd so it stays in memory)
     if (m_currentSource) {
